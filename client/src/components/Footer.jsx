@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import Logo from './Logo.jsx';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -8,7 +9,7 @@ export default function Footer() {
       <div className="container footer-main">
         <div>
           <div className="footer-brand">
-            <span className="brand-dot" />
+            <Logo />
             RealEstate
           </div>
           <p className="footer-tagline">

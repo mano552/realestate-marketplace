@@ -1,32 +1,73 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useGetPropertiesQuery } from '../features/properties/propertiesApi.js';
+import { useGetCategoriesQuery } from '../features/categories/categoriesApi.js';
+
+export const CITIES = ['Lahore', 'Karachi', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Murree'];
 
 export default function Properties() {
-  const [filters, setFilters] = useState({ location: '', minPrice: '', maxPrice: '' });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { data: categories } = useGetCategoriesQuery();
+
+  const [filters, setFilters] = useState({
+    location: searchParams.get('location') || '',
+    minPrice: searchParams.get('minPrice') || '',
+    maxPrice: searchParams.get('maxPrice') || '',
+    category: searchParams.get('category') || '',
+  });
+
+  // Keep filters in sync if the URL changes (e.g. clicked from navbar dropdown)
+  useEffect(() => {
+    setFilters({
+      location: searchParams.get('location') || '',
+      minPrice: searchParams.get('minPrice') || '',
+      maxPrice: searchParams.get('maxPrice') || '',
+      category: searchParams.get('category') || '',
+    });
+  }, [searchParams]);
+
   const { data: properties, isLoading, error } = useGetPropertiesQuery(filters);
 
-  const handleChange = (e) => setFilters({ ...filters, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const next = { ...filters, [e.target.name]: e.target.value };
+    setFilters(next);
+    const cleaned = Object.fromEntries(Object.entries(next).filter(([, v]) => v));
+    setSearchParams(cleaned);
+  };
+
+  const activeCategory = categories?.find((c) => c._id === filters.category);
 
   return (
     <div className="page container">
       <h2>Browse Properties</h2>
+      {(filters.location || activeCategory) && (
+        <p className="muted" style={{ marginTop: -8, marginBottom: 18 }}>
+          Showing{activeCategory ? ` ${activeCategory.name.toLowerCase()} listings` : ' properties'}
+          {filters.location ? ` in ${filters.location}` : ''}
+        </p>
+      )}
 
-      <div className="card" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <input
-          name="location"
-          placeholder="Location"
-          value={filters.location}
-          onChange={handleChange}
-          style={{ flex: 1, padding: 8 }}
-        />
+      <div className="card filter-bar">
+        <select name="location" value={filters.location} onChange={handleChange}>
+          <option value="">All Locations</option>
+          {CITIES.map((city) => (
+            <option key={city} value={city}>{city}</option>
+          ))}
+        </select>
+
+        <select name="category" value={filters.category} onChange={handleChange}>
+          <option value="">All Categories</option>
+          {categories?.map((c) => (
+            <option key={c._id} value={c._id}>{c.name}</option>
+          ))}
+        </select>
+
         <input
           name="minPrice"
           type="number"
           placeholder="Min price"
           value={filters.minPrice}
           onChange={handleChange}
-          style={{ width: 120, padding: 8 }}
         />
         <input
           name="maxPrice"
@@ -34,7 +75,6 @@ export default function Properties() {
           placeholder="Max price"
           value={filters.maxPrice}
           onChange={handleChange}
-          style={{ width: 120, padding: 8 }}
         />
       </div>
 
@@ -57,7 +97,9 @@ export default function Properties() {
           </Link>
         ))}
       </div>
-      {properties?.length === 0 && <p className="muted">No properties match your filters.</p>}
+      {properties?.length === 0 && !isLoading && (
+        <p className="muted">No properties match your filters.</p>
+      )}
     </div>
   );
 }
