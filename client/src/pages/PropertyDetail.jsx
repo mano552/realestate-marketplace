@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useGetPropertyQuery } from '../features/properties/propertiesApi.js';
 import {
@@ -13,6 +13,7 @@ import { selectCurrentUser, selectIsAuthenticated } from '../features/auth/authS
 
 export default function PropertyDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
   const isAuthenticated = useSelector(selectIsAuthenticated);
 
@@ -50,6 +51,9 @@ export default function PropertyDetail() {
 
   return (
     <div className="page container">
+      <button className="back-link" onClick={() => navigate(-1)}>
+        ← Back to listings
+      </button>
       <div className="card">
         <img
           className="property-img"
